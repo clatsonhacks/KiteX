@@ -7,8 +7,8 @@ import {
   ArbitrageFailed,
   HedgeIntentLogged,
   ReputationUpdated,
-} from "../../generated/KitexAuditLog/KitexAuditLog";
-import { Swap } from "../../generated/AlgebraPool/AlgebraPool";
+} from "../generated/KitexAuditLog/KitexAuditLog";
+import { Swap } from "../generated/AlgebraPool/AlgebraPool";
 import {
   Agent,
   AgentEvent,
@@ -17,7 +17,7 @@ import {
   HedgeEvent,
   ReputationEvent,
   PoolSwap,
-} from "../../generated/schema";
+} from "../generated/schema";
 
 function getOrCreateAgent(did: string): Agent {
   let agent = Agent.load(did);
