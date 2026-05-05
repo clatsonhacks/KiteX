@@ -7,7 +7,7 @@ dataSources:
     network: kite-ai
     source:
       # Fill in after deployment
-      address: "AUDIT_LOG_ADDRESS_HERE"
+      address: "0x2725111582b68539DF62d57F579EAfCEbFb870b0"
       abi: KitexAuditLog
       startBlock: 0
     mapping:
@@ -45,7 +45,7 @@ dataSources:
     network: kite-ai
     source:
       # USDC.e / WKITE pool address — get from AlgebraFactory.poolByPair() after confirming
-      address: "ALGEBRA_POOL_ADDRESS_HERE"
+      address: "0xfB971C3200c3DB4Ef23F991D2d1F0D329A1Bf036"
       abi: AlgebraPool
       startBlock: 0
     mapping:
