@@ -1,0 +1,70 @@
+type Agent @entity {
+  id: ID!
+  did: String!
+  agentType: String!
+  currentReputation: BigInt!
+  events: [AgentEvent!]! @derivedFrom(field: "agent")
+}
+
+type AgentEvent @entity {
+  id: ID!
+  agent: Agent!
+  eventType: String!
+  txHash: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  profit: BigDecimal
+  metricValue: BigDecimal
+}
+
+type LPEvent @entity {
+  id: ID!
+  agentDID: String!
+  action: String!
+  tickLower: Int!
+  tickUpper: Int!
+  liquidity: BigInt!
+  feesCollected: BigDecimal
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ArbEvent @entity {
+  id: ID!
+  agentDID: String!
+  success: Boolean!
+  amountIn: BigDecimal!
+  amountOut: BigDecimal!
+  profit: BigDecimal!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type HedgeEvent @entity {
+  id: ID!
+  agentDID: String!
+  deltaExposure: BigDecimal!
+  direction: String!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ReputationEvent @entity {
+  id: ID!
+  agentDID: String!
+  oldScore: BigInt!
+  newScore: BigInt!
+  reason: String!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type PoolSwap @entity {
+  id: ID!
+  amount0: BigDecimal!
+  amount1: BigDecimal!
+  sqrtPriceX96: BigInt!
+  tick: Int!
+  timestamp: BigInt!
+  txHash: Bytes!
+}

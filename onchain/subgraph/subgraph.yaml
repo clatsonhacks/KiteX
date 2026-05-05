@@ -1,0 +1,63 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: KitexAuditLog
+    network: kite-ai
+    source:
+      # Fill in after deployment
+      address: "AUDIT_LOG_ADDRESS_HERE"
+      abi: KitexAuditLog
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AgentEvent
+        - LPEvent
+        - ArbEvent
+        - HedgeEvent
+        - ReputationEvent
+        - Agent
+      abis:
+        - name: KitexAuditLog
+          file: ../contracts/abis/KitexAuditLog.json
+      eventHandlers:
+        - event: LPPositionOpened(indexed bytes32,address,int24,int24,uint128,uint256)
+          handler: handleLPPositionOpened
+        - event: LPPositionClosed(indexed bytes32,uint256,uint256,uint256)
+          handler: handleLPPositionClosed
+        - event: LPPositionRebalanced(indexed bytes32,int24,int24,int24,int24,uint256)
+          handler: handleLPPositionRebalanced
+        - event: ArbitrageExecuted(indexed bytes32,address,address,uint256,uint256,int256,uint256)
+          handler: handleArbitrageExecuted
+        - event: ArbitrageFailed(indexed bytes32,string,uint256)
+          handler: handleArbitrageFailed
+        - event: HedgeIntentLogged(indexed bytes32,int256,string,uint256)
+          handler: handleHedgeIntentLogged
+        - event: ReputationUpdated(indexed bytes32,uint256,uint256,string,uint256)
+          handler: handleReputationUpdated
+      file: ./src/mappings.ts
+  - kind: ethereum
+    name: AlgebraPool
+    network: kite-ai
+    source:
+      # USDC.e / WKITE pool address — get from AlgebraFactory.poolByPair() after confirming
+      address: "ALGEBRA_POOL_ADDRESS_HERE"
+      abi: AlgebraPool
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PoolSwap
+      abis:
+        - name: AlgebraPool
+          file: ../contracts/abis/AlgebraPool.json
+      eventHandlers:
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleSwap
+      file: ./src/mappings.ts
