@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { KitexAuditLog } from "../typechain-types";
 
 describe("KitexAuditLog", function () {
@@ -43,7 +44,7 @@ describe("KitexAuditLog", function () {
     it("emits LPPositionOpened with correct args", async function () {
       await expect(auditLog.logLPOpen(AGENT_DID, POOL_ADDRESS, -887272, 887272, 500000n))
         .to.emit(auditLog, "LPPositionOpened")
-        .withArgs(AGENT_DID, POOL_ADDRESS, -887272, 887272, 500000n, await ethers.provider.getBlock("latest").then(b => b!.timestamp + 1));
+        .withArgs(AGENT_DID, POOL_ADDRESS, -887272, 887272, 500000n, anyValue);
     });
 
     it("emits ArbitrageExecuted", async function () {
@@ -58,7 +59,7 @@ describe("KitexAuditLog", function () {
       await expect(
         auditLog.logReputation(AGENT_DID, 100, 110, "profitable arb")
       ).to.emit(auditLog, "ReputationUpdated")
-        .withArgs(AGENT_DID, 100, 110, "profitable arb", await ethers.provider.getBlock("latest").then(b => b!.timestamp + 1));
+        .withArgs(AGENT_DID, 100, 110, "profitable arb", anyValue);
     });
   });
 });

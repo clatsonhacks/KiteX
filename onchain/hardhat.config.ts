@@ -17,7 +17,7 @@ const config: HardhatUserConfig = {
   networks: {
     kite: {
       url: process.env.KITE_RPC_URL || "https://rpc.gokite.ai/",
-      chainId: 2368,
+      chainId: 2366,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },

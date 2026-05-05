@@ -123,7 +123,7 @@ contract CapitalRouter is Ownable, ReentrancyGuard {
     function getAllocation(bytes32 agentDID) public view returns (uint256) {
         AgentConfig storage agent = agents[agentDID];
         if (!agent.isActive || totalReputationWeight == 0) return 0;
-        return (usdc.balanceOf(address(this)) * agent.currentAllocationBps) / 10000;
+        return (usdc.balanceOf(address(this)) * agent.reputationScore) / totalReputationWeight;
     }
 
     function getAgentConfig(bytes32 agentDID) external view returns (AgentConfig memory) {
