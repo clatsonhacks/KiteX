@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
 
-// Algebra Integral uses Uniswap V3 compatible ABIs
+// Algebra Integral globalState() returns 6 fields (not the V3-style 7).
 const POOL_ABI = [
-  "function globalState() external view returns (uint160 price, int24 tick, uint16 fee, uint16 timepointIndex, uint8 communityFeeToken0, uint8 communityFeeToken1, bool unlocked)",
+  "function globalState() external view returns (uint160 price, int24 tick, uint16 lastFee, uint8 pluginConfig, uint16 communityFee, bool unlocked)",
   "function liquidity() external view returns (uint128)",
   "function token0() external view returns (address)",
   "function token1() external view returns (address)",
@@ -47,7 +47,7 @@ export async function getPoolState(poolAddress: string) {
   return {
     sqrtPriceX96: globalState.price as bigint,
     tick: Number(globalState.tick),
-    fee: Number(globalState.fee),
+    fee: Number(globalState.lastFee),
     liquidity: liquidity as bigint,
     token0: token0 as string,
     token1: token1 as string,
