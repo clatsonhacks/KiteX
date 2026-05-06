@@ -114,7 +114,7 @@ const ARB_HISTORY = gql`
 
 const LP_HISTORY = gql`
   query LPHistory($did: String!) {
-    lpEvents(
+    lpevents(
       where: { agentDID: $did }
       orderBy: timestamp
       orderDirection: desc
@@ -206,8 +206,8 @@ export async function arbHistory(did: string): Promise<ArbEvent[]> {
 
 export async function lpHistory(did: string): Promise<LPEvent[]> {
   try {
-    const data = await client().request<{ lpEvents: LPEvent[] }>(LP_HISTORY, { did });
-    return data.lpEvents;
+    const data = await client().request<{ lpevents: LPEvent[] }>(LP_HISTORY, { did });
+    return data.lpevents;
   } catch (e) {
     console.warn("[goldsky] lpHistory failed:", (e as Error).message);
     return [];
