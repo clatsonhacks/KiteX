@@ -1,4 +1,4 @@
-# Kitex Backend (Person 2)
+# Kitex Backend
 
 Node.js + Express server. Runs the agent orchestrator loop, executes the three agents'
 logic against Kite mainnet, exposes the REST API the frontend consumes, and persists
