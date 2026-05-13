@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///D:/Hackathons/KiteX/frontend/app/%28kitex%29/layout.tsx"],"sourcesContent":["// Note: QueryProvider and KitexNav are in root layout\n// This layout exists for potential (kitex)-specific nesting\n\nexport default function KitexLayout({ children }: { children: React.ReactNode }) {\n  return <>{children}</>\n}\n"],"names":[],"mappings":"AAAA,sDAAsD;AACtD,4DAA4D;;;;;;;AAE7C,SAAS,YAAY,EAAE,QAAQ,EAAiC;IAC7E,qBAAO;kBAAG;;AACZ"}}]
-}

@@ -1,7 +1,0 @@
-{
-  "/(kitex)/agents/page": "app/(kitex)/agents/page.js",
-  "/(kitex)/demo/page": "app/(kitex)/demo/page.js",
-  "/(kitex)/how-it-works/page": "app/(kitex)/how-it-works/page.js",
-  "/(kitex)/positions/page": "app/(kitex)/positions/page.js",
-  "/page": "app/page.js"
-}
