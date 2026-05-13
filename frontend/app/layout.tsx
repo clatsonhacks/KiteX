@@ -55,7 +55,7 @@ export default function RootLayout({
         <QueryProvider>
           <div className="relative min-h-screen">
             <KitexNav />
-            <div className="md:pl-20">{children}</div>
+            <div className="pl-48 md:pl-56">{children}</div>
           </div>
         </QueryProvider>
         <Analytics />
