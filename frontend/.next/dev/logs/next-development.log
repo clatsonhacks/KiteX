@@ -1,8 +1,8 @@
-[00:00:03.447] Server  LOG     ✓ Ready in 3.2s
-[00:00:07.254] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:07.254] Browser DEBUG   EthereumProvider: process message {"id":1,"jsonrpc":"2.0","method":"ext_providerConnectInfo","result":"0x2a"}
-[00:00:07.254] Browser DEBUG   EthereumProvider: Connected to chain with ID "0x2a".
-[00:00:07.996] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
-[00:00:07.996] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
-[00:00:07.996] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.3.1","sv":"0.1.3","ts":1778171791550} /_vercel/insights/view
-[00:00:08.905] Browser DEBUG   Provider initialization - wallet not connected
+[00:00:01.041] Server  LOG     ✓ Ready in 715ms
+[00:00:04.588] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:04.588] Browser DEBUG   EthereumProvider: process message {"id":1,"jsonrpc":"2.0","method":"ext_providerConnectInfo","result":"0x2a"}
+[00:00:04.588] Browser DEBUG   EthereumProvider: Connected to chain with ID "0x2a".
+[00:00:05.204] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[00:00:05.204] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
+[00:00:05.204] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3001/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3001/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.3.1","sv":"0.1.3","ts":1778634855246} /_vercel/insights/view
+[00:00:05.669] Browser DEBUG   Provider initialization - wallet not connected

@@ -6,6 +6,8 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy": "hardhat run scripts/deploy.ts --network kite",
+    "register": "hardhat run scripts/registerAgents.ts --network kite",
+    "deposit": "hardhat run scripts/depositUsdc.ts --network kite",
     "verify:capital": "hardhat verify --network kite $CAPITAL_ROUTER_ADDRESS",
     "verify:audit": "hardhat verify --network kite $AUDIT_LOG_ADDRESS"
   },
