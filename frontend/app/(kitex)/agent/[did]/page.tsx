@@ -73,7 +73,7 @@ export default function AgentDetailPage() {
       <div className="relative z-10 max-w-[1800px] mx-auto p-8 md:p-12">
         {/* Back Button */}
         <Link
-          href="/dashboard"
+          href="/"
           className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />

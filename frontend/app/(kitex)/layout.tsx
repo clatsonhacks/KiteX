@@ -1,13 +1,6 @@
-import { QueryProvider } from "@/components/query-provider"
-import { KitexNav } from "@/components/kitex/kitex-nav"
+// Note: QueryProvider and KitexNav are in root layout
+// This layout exists for potential (kitex)-specific nesting
 
 export default function KitexLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <QueryProvider>
-      <div className="relative min-h-screen">
-        <KitexNav />
-        <div className="md:pl-20">{children}</div>
-      </div>
-    </QueryProvider>
-  )
+  return <>{children}</>
 }

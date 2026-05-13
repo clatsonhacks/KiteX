@@ -2,7 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { SmoothScroll } from "@/components/smooth-scroll"
+import { QueryProvider } from "@/components/query-provider"
+import { KitexNav } from "@/components/kitex/kitex-nav"
 import "./globals.css"
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -18,10 +19,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], variable: "--font-bebas" })
 
 export const metadata: Metadata = {
-  title: "SIGNAL — Experimental Creative Studio",
+  title: "Kitex — Autonomous Market Making on Kite AI",
   description:
-    "Interface studies in controlled environments. We design systems that behave, not just screens that display.",
-  generator: "v0.app",
+    "Three agents, one treasury, zero human intervention. Autonomous market making with reputation-weighted capital delegation.",
   icons: {
     icon: [
       {
@@ -52,7 +52,12 @@ export default function RootLayout({
         className={`${ibmPlexSans.variable} ${bebasNeue.variable} ${ibmPlexMono.variable} font-sans antialiased overflow-x-hidden`}
       >
         <div className="noise-overlay" aria-hidden="true" />
-        <SmoothScroll>{children}</SmoothScroll>
+        <QueryProvider>
+          <div className="relative min-h-screen">
+            <KitexNav />
+            <div className="md:pl-20">{children}</div>
+          </div>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>

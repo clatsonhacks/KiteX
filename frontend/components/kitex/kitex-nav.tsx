@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { id: "dashboard", label: "Dashboard", href: "/dashboard" },
+  { id: "dashboard", label: "Dashboard", href: "/" },
   { id: "agents", label: "Agents", href: "/agents" },
   { id: "positions", label: "Positions", href: "/positions" },
   { id: "demo", label: "Demo", href: "/demo" },
@@ -19,7 +19,7 @@ export function KitexNav() {
     <nav className="fixed left-0 top-0 z-50 h-screen w-16 md:w-20 flex flex-col justify-center border-r border-border/30 bg-background/80 backdrop-blur-sm">
       {/* Logo */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2">
-        <Link href="/dashboard" className="block">
+        <Link href="/" className="block">
           <div className="font-[var(--font-bebas)] text-xl text-accent tracking-wide rotate-90 whitespace-nowrap">
             KITEX
           </div>
