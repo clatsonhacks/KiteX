@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { getAgents } from "@/lib/api"
+import { getAgents, type AgentConfig } from "@/lib/api"
 import { AgentCard } from "@/components/kitex/agent-card"
 
 export default function AgentsPage() {
@@ -11,8 +11,7 @@ export default function AgentsPage() {
     refetchInterval: 3000,
   })
 
-  // Handle different response formats - backend might return array or object with agents property
-  const agents = Array.isArray(data) ? data : (data as any)?.agents || []
+  const agents: AgentConfig[] = data || []
 
   if (isLoading) {
     return (

@@ -1,8 +1,58 @@
+import { ethers } from "ethers";
 import { config } from "../config";
 import { recentSwaps, computeReferencePrice } from "../lib/goldsky";
-import { logArb, logArbFailed } from "../lib/contracts";
+import { logArb, logArbFailed, getSigner } from "../lib/contracts";
 import { applyArbDecision } from "../lib/pnl";
+import { ALGEBRA_ADDRESSES, TOKENS } from "../lib/algebra";
 import { PoolSnapshot, priceFromPool, PAIR } from "./liquidityAgent";
+
+const SWAP_ROUTER_ABI = [
+  "function exactInputSingle((address tokenIn,address tokenOut,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 limitSqrtPrice)) external payable returns (uint256 amountOut)",
+];
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function balanceOf(address owner) external view returns (uint256)",
+];
+
+/**
+ * Executes a real arbitrage swap on Algebra SwapRouter from the deployer wallet.
+ * Returns the on-chain amountOut and tx hash. Throws on insufficient balance or
+ * any router error — caller decides whether to fall back to a simulated record.
+ */
+export async function executeArbSwap(
+  tokenIn: string,
+  tokenOut: string,
+  amountInRaw: bigint
+): Promise<{ txHash: string; amountOutRaw: bigint }> {
+  const signer = getSigner();
+  const tokenInContract = new ethers.Contract(tokenIn, ERC20_ABI, signer);
+
+  const balance: bigint = await tokenInContract.balanceOf(signer.address);
+  if (balance < amountInRaw) {
+    throw new Error(`insufficient balance: have ${balance}, need ${amountInRaw}`);
+  }
+
+  const tokenOutContract = new ethers.Contract(tokenOut, ERC20_ABI, signer);
+  const balOutBefore: bigint = await tokenOutContract.balanceOf(signer.address);
+
+  const approveTx = await tokenInContract.approve(ALGEBRA_ADDRESSES.swapRouter, amountInRaw);
+  await approveTx.wait();
+
+  const router = new ethers.Contract(ALGEBRA_ADDRESSES.swapRouter, SWAP_ROUTER_ABI, signer);
+  const tx = await router.exactInputSingle({
+    tokenIn,
+    tokenOut,
+    recipient: signer.address,
+    deadline: Math.floor(Date.now() / 1000) + 600,
+    amountIn: amountInRaw,
+    amountOutMinimum: 0,
+    limitSqrtPrice: 0,
+  });
+  const receipt = await tx.wait();
+
+  const balOutAfter: bigint = await tokenOutContract.balanceOf(signer.address);
+  return { txHash: receipt.hash, amountOutRaw: balOutAfter - balOutBefore };
+}
 
 export type ArbAction =
   | { kind: "EXECUTE"; tokenIn: string; tokenOut: string; expectedProfitUsd: number; divergenceBps: number }

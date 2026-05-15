@@ -17,7 +17,10 @@ import {
   decideArbAction,
   recordArbExecution,
   recordArbFailure,
+  executeArbSwap,
 } from "./arbitrageAgent";
+import { ethers } from "ethers";
+import { TOKENS } from "../lib/algebra";
 import {
   decideRiskAction,
   recordHedgeIntent,
@@ -153,20 +156,42 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
   });
 
   if (arbAction.kind === "EXECUTE" && !opts?.dryRun) {
+    // tokenIn raw amount: USDC.e = 6 decimals, WKITE = 18 decimals.
+    const isUsdcIn = arbAction.tokenIn.toLowerCase() === TOKENS.USDC_E.toLowerCase();
+    const decimalsIn = isUsdcIn ? 6 : 18;
+    // For WKITE-in we size by the equivalent USD value at current pool price.
+    const amountInRaw = isUsdcIn
+      ? ethers.parseUnits(swapAmountUsd.toFixed(6), 6)
+      : ethers.parseUnits((swapAmountUsd / poolPrice).toFixed(18), 18);
+
+    let realTxHash = "";
+    let amountOutUsd = swapAmountUsd + arbAction.expectedProfitUsd;
+    let executed = false;
     try {
-      // The actual SwapRouter call is performed via session key (lib/sessionKey.ts).
-      // For now we record the expected outcome — when the AA SDK is wired we replace
-      // this block with the real swap and use the actual amountOut.
-      const txHash = await recordArbExecution({
+      const swapResult = await executeArbSwap(arbAction.tokenIn, arbAction.tokenOut, amountInRaw);
+      realTxHash = swapResult.txHash;
+      const isUsdcOut = arbAction.tokenOut.toLowerCase() === TOKENS.USDC_E.toLowerCase();
+      const decimalsOut = isUsdcOut ? 6 : 18;
+      const amountOutTokens = Number(ethers.formatUnits(swapResult.amountOutRaw, decimalsOut));
+      amountOutUsd = isUsdcOut ? amountOutTokens : amountOutTokens * poolPrice;
+      executed = true;
+      console.log(`[arb] swap done tx=${realTxHash} amountOutUsd=${amountOutUsd.toFixed(4)}`);
+    } catch (e) {
+      console.warn("[arb] swap failed, falling back to record-only:", (e as Error).message);
+    }
+
+    try {
+      const repTxHash = await recordArbExecution({
         reputationBefore: Number(arbCfg.reputationScore),
         tokenIn: arbAction.tokenIn,
         tokenOut: arbAction.tokenOut,
         amountInUsd: swapAmountUsd,
-        amountOutUsd: swapAmountUsd + arbAction.expectedProfitUsd,
+        amountOutUsd,
         gasCostUsd: 0.002,
-        txHash: "",
+        txHash: realTxHash,
       });
-      decisions[decisions.length - 1].txHash = txHash;
+      decisions[decisions.length - 1].txHash = realTxHash || repTxHash;
+      decisions[decisions.length - 1].action = executed ? "EXECUTE" : "EXECUTE_RECORD_ONLY";
     } catch (e) {
       console.warn("[orchestrator] arb execution record failed:", (e as Error).message);
       try {
@@ -177,7 +202,7 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
           tokenOut: arbAction.tokenOut,
           amountInUsd: swapAmountUsd,
           gasCostUsd: 0.002,
-          txHash: "",
+          txHash: realTxHash,
         });
       } catch {}
     }

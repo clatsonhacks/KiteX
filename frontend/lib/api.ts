@@ -32,14 +32,7 @@ export interface DashboardData {
     arbProfitTodayUsd: number;
     netPnLTodayUsd: number;
   };
-  agents: Array<{
-    did: string;
-    agentType: string;
-    reputation: number;
-    allocationBps: number;
-    allocationUsd: number;
-    isActive: boolean;
-  }>;
+  agents: AgentConfig[];
   recentEvents: Array<{
     timestamp: number;
     agent: string;
@@ -214,6 +207,8 @@ export interface AgentDecision {
   netPnL?: number;
   txHash: string;
   inputAmount?: number;
+  // Compatibility field — set from netPnL by getAgentDetail()
+  profit?: string;
 }
 
 export interface AgentDetail {
@@ -268,38 +263,40 @@ export async function getDemoInfo(): Promise<DemoInfo> {
 }
 
 export async function triggerDivergence(direction: 'up' | 'down', amount: string): Promise<{ success: boolean; txHash?: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/demo/divergence`, {
+  // Frontend uses up/down for UX clarity; backend expects buy_wkite (push price up) / sell_wkite (push price down).
+  const backendDirection = direction === 'up' ? 'buy_wkite' : 'sell_wkite';
+  const res = await fetch(`${BACKEND_URL}/api/demo/trigger-divergence`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ direction, amount }),
+    body: JSON.stringify({ direction: backendDirection, amountUsdc: parseFloat(amount) }),
   });
   if (!res.ok) throw new Error('Failed to trigger divergence');
   return res.json();
 }
 
 export async function triggerVolume(swapCount: number, amount: string): Promise<{ success: boolean; txHashes?: string[] }> {
-  const res = await fetch(`${BACKEND_URL}/api/demo/volume`, {
+  const res = await fetch(`${BACKEND_URL}/api/demo/trigger-volume`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ swapCount, amount }),
+    body: JSON.stringify({ swaps: swapCount, amountUsdc: parseFloat(amount) }),
   });
   if (!res.ok) throw new Error('Failed to trigger volume');
   return res.json();
 }
 
 export async function triggerRebalance(): Promise<{ success: boolean; txHash?: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/demo/rebalance`, {
+  const res = await fetch(`${BACKEND_URL}/api/demo/trigger-rebalance`, {
     method: 'POST',
   });
   if (!res.ok) throw new Error('Failed to trigger rebalance');
   return res.json();
 }
 
-export async function runCycle(force: boolean = false): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`${BACKEND_URL}/api/demo/cycle`, {
+export async function runCycle(_dryRun: boolean = false): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${BACKEND_URL}/api/demo/run-cycle`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ force }),
+    body: JSON.stringify({ dryRun: _dryRun }),
   });
   if (!res.ok) throw new Error('Failed to run cycle');
   return res.json();
