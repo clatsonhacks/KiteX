@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { triggerDivergence, triggerVolume, triggerRebalance, runCycle, getDemoInfo } from "@/lib/api"
 import { getLatestEvents } from "@/lib/goldsky"
+import { resolveAgentType, relativeTime } from "@/lib/agents"
 import { Button } from "@/components/ui/button"
 import { ArrowUp, ArrowDown, Activity, RefreshCw, Play } from "lucide-react"
 import Link from "next/link"
@@ -78,79 +79,70 @@ export default function DemoPage() {
 
       <div className="relative z-10 max-w-[1800px] mx-auto p-8 md:p-12">
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="font-[var(--font-bebas)] text-5xl text-foreground tracking-wide mb-2">
-            DEMO CONTROLS
-          </h1>
-          <p className="font-mono text-sm text-muted-foreground mb-4">
-            Hackathon demonstration controls — all actions execute real mainnet transactions
-          </p>
-
-          {/* Warning Banner */}
-          <div className="border border-border bg-background p-4 mb-4">
-            <div className="font-mono text-xs text-accent">
-              ⚠ WARNING: These buttons trigger REAL on-chain transactions on Kite mainnet. Use sparingly during demo.
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
+            <h1 className="font-[var(--font-bebas)] text-5xl text-foreground tracking-wide">
+              DEMO CONTROLS
+            </h1>
+            <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-widest text-foreground/80">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Kite Mainnet · Live</span>
+              </div>
+              <div>
+                Chain <span className="text-foreground">2368</span>
+              </div>
             </div>
           </div>
+          <p className="font-mono text-sm text-foreground/70 mb-8">
+            All actions below execute real transactions on Kite mainnet.
+          </p>
 
           {/* Status Message */}
           {message && (
             <div
               className={cn(
-                "border bg-background p-4 mb-4",
-                message.type === "success" ? "border-border text-green-400" : "border-border text-destructive"
+                "border-l-2 bg-background px-4 py-3 mb-6 font-mono text-xs",
+                message.type === "success" ? "border-emerald-500 text-emerald-400" : "border-destructive text-destructive"
               )}
             >
-              <div className="font-mono text-xs">{message.text}</div>
+              {message.text}
             </div>
           )}
 
-          {/* Demo Info */}
+          {/* Demo Info — refined address cards */}
           {demoInfo && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="border border-border bg-background p-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-                  CapitalRouter
-                </div>
-                <Link
-                  href={`https://kitescan.ai/address/${demoInfo.capitalRouter}`}
-                  target="_blank"
-                  className="font-mono text-xs text-accent hover:underline break-all"
-                >
-                  {demoInfo.capitalRouter}
-                </Link>
-              </div>
-              <div className="border border-border bg-background p-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-                  KitexAuditLog
-                </div>
-                <Link
-                  href={`https://kitescan.ai/address/${demoInfo.auditLog}`}
-                  target="_blank"
-                  className="font-mono text-xs text-accent hover:underline break-all"
-                >
-                  {demoInfo.auditLog}
-                </Link>
-              </div>
-              <div className="border border-border bg-background p-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-                  Goldsky Subgraph
-                </div>
-                {(() => {
-                  const url = demoInfo.goldskyEndpoint || ""
-                  const match = url.match(/subgraphs\/([^/]+)\/([^/]+)/)
-                  const label = match ? `${match[1]} · v${match[2]}` : url
-                  return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <AddressCard
+                label="CapitalRouter"
+                address={demoInfo.capitalRouter}
+                href={`https://kitescan.ai/address/${demoInfo.capitalRouter}`}
+              />
+              <AddressCard
+                label="KitexAuditLog"
+                address={demoInfo.auditLog}
+                href={`https://kitescan.ai/address/${demoInfo.auditLog}`}
+              />
+              {(() => {
+                const url = demoInfo.goldskyEndpoint || ""
+                const match = url.match(/subgraphs\/([^/]+)\/([^/]+)/)
+                const label = match ? `${match[1]} · v${match[2]}` : "subgraph"
+                return (
+                  <div className="border border-border bg-background p-4 hover:border-accent/40 transition-colors">
+                    <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-2">
+                      Goldsky Subgraph
+                    </div>
                     <Link
                       href={url}
                       target="_blank"
-                      className="font-mono text-xs text-accent hover:underline break-all"
+                      className="group inline-flex items-center gap-2 font-mono text-xs text-foreground hover:text-accent transition-colors"
                     >
-                      {label}
+                      <span>{label}</span>
+                      <span className="text-muted-foreground/60 group-hover:text-accent">↗</span>
                     </Link>
-                  )
-                })()}
-              </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>
@@ -159,10 +151,10 @@ export default function DemoPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Panel 1: Price Divergence */}
           <div className="border border-border bg-background p-6 flex flex-col">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-4">
               1. Trigger Price Divergence
             </div>
-            <p className="font-mono text-xs text-muted-foreground mb-6 flex-1">
+            <p className="font-mono text-xs text-foreground/60 mb-6 flex-1">
               Executes a real swap that pushes pool price outside LP range. ArbitrageAgent will detect and self-arb within 1-2 cycles.
             </p>
 
@@ -188,10 +180,10 @@ export default function DemoPage() {
 
           {/* Panel 2: High Volume */}
           <div className="border border-border bg-background p-6 flex flex-col">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-4">
               2. Simulate High Volume
             </div>
-            <p className="font-mono text-xs text-muted-foreground mb-6 flex-1">
+            <p className="font-mono text-xs text-foreground/60 mb-6 flex-1">
               Executes 5 consecutive swaps to accumulate delta exposure. RiskAgent will detect and log a hedge intent.
             </p>
 
@@ -207,10 +199,10 @@ export default function DemoPage() {
 
           {/* Panel 3: Force Rebalance */}
           <div className="border border-border bg-background p-6 flex flex-col">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-4">
               3. Force Rebalance
             </div>
-            <p className="font-mono text-xs text-muted-foreground mb-6 flex-1">
+            <p className="font-mono text-xs text-foreground/60 mb-6 flex-1">
               Forces LiquidityAgent to remove current LP position and place a new one immediately, ignoring cooldown.
             </p>
 
@@ -229,11 +221,11 @@ export default function DemoPage() {
         <div className="border border-border bg-background p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+              <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-2">
                 Manual Cycle Trigger
               </div>
-              <p className="font-mono text-xs text-muted-foreground">
-                Run one full orchestrator cycle on demand (useful if 15s interval feels too slow during demo)
+              <p className="font-mono text-xs text-foreground/60">
+                Run one full orchestrator cycle on demand (useful if 15s interval feels too slow during demo).
               </p>
             </div>
             <Button
@@ -249,40 +241,44 @@ export default function DemoPage() {
 
         {/* Live Transaction Feed */}
         <div className="border border-border bg-background p-6">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
+          <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-4">
             Live Transaction Feed (Last 10 Events)
           </div>
 
           {events.length > 0 ? (
             <div className="space-y-2">
-              {events.slice(0, 10).map((event) => (
-                <div key={event.id} className="border-l-2 border-accent bg-background/50 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-mono text-xs text-foreground mb-1">
-                        {event.agent.agentType} — {event.eventType}
-                      </div>
-                      <Link
-                        href={`https://kitescan.ai/tx/${event.txHash}`}
-                        target="_blank"
-                        className="font-mono text-[10px] text-accent hover:underline"
-                      >
-                        {event.txHash}
-                      </Link>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono text-[10px] text-muted-foreground">
-                        {new Date(parseInt(event.timestamp) * 1000).toLocaleTimeString()}
-                      </div>
-                      {event.profit && (
-                        <div className="font-mono text-[10px] text-green-400 mt-1">
-                          +${parseFloat(event.profit).toFixed(4)}
+              {events.slice(0, 10).map((event) => {
+                const agentName = resolveAgentType(event.agent.did, event.agent.agentType)
+                const profit = event.profit ? parseFloat(event.profit) : null
+                return (
+                  <div key={event.id} className="border-l-2 border-border bg-background p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-mono text-xs text-foreground mb-1">
+                          {agentName} — {event.eventType}
                         </div>
-                      )}
+                        <Link
+                          href={`https://kitescan.ai/tx/${event.txHash}`}
+                          target="_blank"
+                          className="font-mono text-[10px] text-accent hover:underline"
+                        >
+                          {event.txHash.slice(0, 14)}…{event.txHash.slice(-6)}
+                        </Link>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono text-[10px] text-muted-foreground">
+                          {relativeTime(event.timestamp)}
+                        </div>
+                        {profit !== null && profit > 0 && profit < 100 && (
+                          <div className="font-mono text-[10px] text-green-400 mt-1">
+                            +${profit.toFixed(4)}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="py-12 text-center font-mono text-xs text-muted-foreground">
@@ -292,5 +288,36 @@ export default function DemoPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function AddressCard({
+  label,
+  address,
+  href,
+}: {
+  label: string
+  address: string
+  href: string
+}) {
+  const short = `${address.slice(0, 8)}…${address.slice(-6)}`
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      className="group block border border-border bg-background p-4 hover:border-accent/40 transition-colors"
+    >
+      <div className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 mb-2">
+        {label}
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-xs text-foreground group-hover:text-accent transition-colors">
+          {short}
+        </span>
+        <span className="font-mono text-[10px] text-muted-foreground/60 group-hover:text-accent transition-colors">
+          ↗ Kitescan
+        </span>
+      </div>
+    </Link>
   )
 }

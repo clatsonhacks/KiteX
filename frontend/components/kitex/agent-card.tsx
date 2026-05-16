@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import type { AgentConfig } from "@/lib/api"
+import { relativeTime } from "@/lib/agents"
 
 interface AgentCardProps {
   agent: AgentConfig
@@ -80,18 +81,27 @@ export function AgentCard({ agent, className }: AgentCardProps) {
           </div>
         </div>
 
-        {/* Last Action */}
-        {agent.lastAction && (
-          <div className="border-t border-border/30 pt-4 mt-4">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-              Last Action
-            </div>
-            <div className="font-mono text-xs text-foreground">{agent.lastAction.type}</div>
-            <div className="font-mono text-[10px] text-muted-foreground mt-1">
-              {new Date(agent.lastAction.timestamp * 1000).toLocaleString()}
-            </div>
+        {/* Last Action — always rendered so all cards have equal height */}
+        <div className="border-t border-border/30 pt-4 mt-4">
+          <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+            Last Action
           </div>
-        )}
+          {agent.lastAction ? (
+            <>
+              <div className="font-mono text-xs text-foreground">{agent.lastAction.type}</div>
+              <div className="font-mono text-[10px] text-muted-foreground mt-1">
+                {relativeTime(Math.floor(agent.lastAction.timestamp / 1000))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="font-mono text-xs text-muted-foreground/60">—</div>
+              <div className="font-mono text-[10px] text-muted-foreground/40 mt-1">
+                awaiting first cycle
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </Link>
   )

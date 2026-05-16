@@ -2,10 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { getLatestEvents, type AgentEvent } from "@/lib/goldsky"
+import { resolveAgentType, relativeTime } from "@/lib/agents"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-const AGENT_COLORS = {
+const AGENT_COLORS: Record<string, string> = {
   LiquidityAgent: "border-l-blue-400 text-blue-300",
   ArbitrageAgent: "border-l-accent text-accent",
   RiskAgent: "border-l-emerald-400 text-emerald-300",
@@ -58,8 +59,11 @@ export function LiveFeed() {
 }
 
 function EventRow({ event }: { event: AgentEvent }) {
-  const colorClass =
-    AGENT_COLORS[event.agent.agentType as keyof typeof AGENT_COLORS] || "border-l-foreground text-foreground"
+  const agentName = resolveAgentType(event.agent.did, event.agent.agentType)
+  const colorClass = AGENT_COLORS[agentName] || "border-l-foreground text-foreground"
+  const profit = event.profit ? parseFloat(event.profit) : null
+  // Filter out the absurd stub-era profits (>$100 is impossible at our sizes).
+  const showProfit = profit !== null && profit > 0 && profit < 100
 
   return (
     <Link
@@ -71,16 +75,16 @@ function EventRow({ event }: { event: AgentEvent }) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className={cn("font-mono text-xs uppercase tracking-wide", colorClass)}>
-              {event.agent.agentType}
+              {agentName}
             </span>
             <span className="font-mono text-[10px] text-muted-foreground">
               {event.eventType}
             </span>
           </div>
 
-          {event.profit && (
+          {showProfit && (
             <div className="font-mono text-xs text-green-400 mb-1">
-              Profit: ${parseFloat(event.profit).toFixed(4)}
+              Profit: ${profit!.toFixed(4)}
             </div>
           )}
 
@@ -97,7 +101,7 @@ function EventRow({ event }: { event: AgentEvent }) {
 
         <div className="text-right">
           <div className="font-mono text-[10px] text-muted-foreground">
-            {new Date(parseInt(event.timestamp) * 1000).toLocaleTimeString()}
+            {relativeTime(event.timestamp)}
           </div>
         </div>
       </div>
