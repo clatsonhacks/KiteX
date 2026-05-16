@@ -4,6 +4,7 @@ import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { QueryProvider } from "@/components/query-provider"
 import { KitexNav } from "@/components/kitex/kitex-nav"
+import { LayoutWrapper } from "@/components/layout-wrapper"
 import "./globals.css"
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -55,7 +56,7 @@ export default function RootLayout({
         <QueryProvider>
           <div className="relative min-h-screen">
             <KitexNav />
-            <div className="pl-48 md:pl-56">{children}</div>
+            <LayoutWrapper>{children}</LayoutWrapper>
           </div>
         </QueryProvider>
         <Analytics />

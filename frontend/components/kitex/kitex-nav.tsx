@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { id: "home", label: "Home", href: "/" },
   { id: "dashboard", label: "Dashboard", href: "/dashboard" },
   { id: "agents", label: "Agents", href: "/agents" },
   { id: "positions", label: "Positions", href: "/positions" },
@@ -15,6 +14,11 @@ const navItems = [
 
 export function KitexNav() {
   const pathname = usePathname()
+
+  // Hide nav on landing page (root)
+  if (pathname === '/') {
+    return null
+  }
 
   return (
     <nav className="fixed left-0 top-0 z-50 h-screen w-48 md:w-56 flex flex-col border-r border-border/30 bg-background/80 backdrop-blur-sm">

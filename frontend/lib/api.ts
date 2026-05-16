@@ -23,6 +23,21 @@ export interface AgentConfig {
   currentAllocation: string;
 }
 
+// Dashboard agent type with compatibility fields
+export interface DashboardAgent {
+  did: string;
+  agentType: 'LiquidityAgent' | 'ArbitrageAgent' | 'RiskAgent';
+  reputation: number;
+  allocationBps: number;
+  allocationUsd: number;
+  isActive: boolean;
+  // Frontend compatibility aliases (added by getDashboard)
+  reputationScore: number;
+  currentAllocationBps: number;
+  currentAllocation: string;
+  status: 'ACTIVE' | 'IDLE' | 'REBALANCING' | 'ERROR';
+}
+
 // Dashboard response from /api/dashboard
 export interface DashboardData {
   treasury: { usd: number };
@@ -32,7 +47,7 @@ export interface DashboardData {
     arbProfitTodayUsd: number;
     netPnLTodayUsd: number;
   };
-  agents: AgentConfig[];
+  agents: DashboardAgent[];
   recentEvents: Array<{
     timestamp: number;
     agent: string;
@@ -204,11 +219,10 @@ export async function getRecentTransactions(limit: number = 20): Promise<{
 export interface AgentDecision {
   action: string;
   timestamp: number;
+  profit?: string;
   netPnL?: number;
   txHash: string;
   inputAmount?: number;
-  // Compatibility field — set from netPnL by getAgentDetail()
-  profit?: string;
 }
 
 export interface AgentDetail {
