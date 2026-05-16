@@ -5,6 +5,7 @@ import {
   getTreasuryBalance,
 } from "../lib/contracts";
 import { recordCycleState, nextCycleNumber } from "../lib/mongo";
+import { logger, kitescanTx } from "../lib/logger";
 import {
   decideLiquidityAction,
   estimateRebalanceUplift,
@@ -90,11 +91,19 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
   const start = Date.now();
   const cycleNumber = await nextCycleNumber().catch(() => 0);
 
+  logger.info("ORCHESTRATOR", `cycle #${cycleNumber} starting`, { dryRun: !!opts?.dryRun });
+
   // 1. Read pool + treasury + agent reputations
   const pool = await getPoolState(config.algebraPoolAddress);
   const poolPrice = priceFromSnapshot(pool);
   const treasuryRaw = await getTreasuryBalance().catch(() => 0n);
   const treasuryUsd = Number(treasuryRaw) / 1e6;
+
+  logger.info("CHAIN", "pool state read", {
+    price: poolPrice.toFixed(6),
+    tick: pool.tick,
+    treasury: `$${treasuryUsd.toFixed(2)}`,
+  });
 
   const [liqCfg, arbCfg, riskCfg] = await Promise.all([
     getAgentConfig(config.liquidityAgentDID),
@@ -102,11 +111,20 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
     getAgentConfig(config.riskAgentDID),
   ]);
 
+  logger.info("CHAIN", "agent reputations", {
+    Liquidity: Number(liqCfg.reputationScore),
+    Arbitrage: Number(arbCfg.reputationScore),
+    Risk: Number(riskCfg.reputationScore),
+  });
+
   const decisions: CycleSummary["decisions"] = [];
   const nowUnix = Math.floor(Date.now() / 1000);
 
   // 2. LiquidityAgent
   const liqAction = decideLiquidityAction(pool, STATE.liquidity, nowUnix);
+  logger.info("AGENT", `Liquidity → ${liqAction.kind}`, {
+    reason: liqAction.kind === "SKIP" ? liqAction.reason : "in-range",
+  });
   decisions.push({
     agent: "Liquidity",
     action: liqAction.kind,
@@ -148,7 +166,17 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
   // 3. ArbitrageAgent
   const arbAllocationUsd = Number(arbCfg.currentAllocationBps) / 10000 * treasuryUsd;
   const swapAmountUsd = Math.max(1, arbAllocationUsd * 0.1); // size each arb at 10% of allocation
+  logger.info("GOLDSKY", "querying recent swaps for reference price...");
   const arbAction = await decideArbAction(pool, swapAmountUsd);
+  if (arbAction.kind === "EXECUTE") {
+    logger.success("AGENT", `Arbitrage → EXECUTE`, {
+      divergence: `${arbAction.divergenceBps}bps`,
+      profit: `$${arbAction.expectedProfitUsd.toFixed(4)}`,
+      size: `$${swapAmountUsd.toFixed(2)}`,
+    });
+  } else {
+    logger.info("AGENT", `Arbitrage → SKIP`, { reason: arbAction.reason });
+  }
   decisions.push({
     agent: "Arbitrage",
     action: arbAction.kind,
@@ -168,6 +196,11 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
     let amountOutUsd = swapAmountUsd + arbAction.expectedProfitUsd;
     let executed = false;
     try {
+      logger.info("TX", "submitting Algebra SwapRouter.exactInputSingle...", {
+        tokenIn: arbAction.tokenIn.slice(0, 10) + "…",
+        tokenOut: arbAction.tokenOut.slice(0, 10) + "…",
+        amountIn: amountInRaw.toString(),
+      });
       const swapResult = await executeArbSwap(arbAction.tokenIn, arbAction.tokenOut, amountInRaw);
       realTxHash = swapResult.txHash;
       const isUsdcOut = arbAction.tokenOut.toLowerCase() === TOKENS.USDC_E.toLowerCase();
@@ -175,9 +208,16 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
       const amountOutTokens = Number(ethers.formatUnits(swapResult.amountOutRaw, decimalsOut));
       amountOutUsd = isUsdcOut ? amountOutTokens : amountOutTokens * poolPrice;
       executed = true;
-      console.log(`[arb] swap done tx=${realTxHash} amountOutUsd=${amountOutUsd.toFixed(4)}`);
+      logger.success("TX", `swap confirmed`, {
+        tx: realTxHash,
+        kitescan: kitescanTx(realTxHash),
+        amountOut: `$${amountOutUsd.toFixed(4)}`,
+        pnl: `$${(amountOutUsd - swapAmountUsd).toFixed(4)}`,
+      });
     } catch (e) {
-      console.warn("[arb] swap failed, falling back to record-only:", (e as Error).message);
+      logger.warn("TX", "swap failed, falling back to record-only", {
+        error: (e as Error).message,
+      });
     }
 
     try {
@@ -190,10 +230,14 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
         gasCostUsd: 0.002,
         txHash: realTxHash,
       });
+      logger.success("CHAIN", `AuditLog.logArb + reputation update`, {
+        tx: repTxHash,
+        kitescan: kitescanTx(repTxHash),
+      });
       decisions[decisions.length - 1].txHash = realTxHash || repTxHash;
       decisions[decisions.length - 1].action = executed ? "EXECUTE" : "EXECUTE_RECORD_ONLY";
     } catch (e) {
-      console.warn("[orchestrator] arb execution record failed:", (e as Error).message);
+      logger.error("CHAIN", "arb execution record failed", { error: (e as Error).message });
       try {
         await recordArbFailure({
           reputationBefore: Number(arbCfg.reputationScore),
@@ -217,6 +261,10 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
     rebalanceAvailable,
     rebalanceCostEfficient
   );
+  logger.info("AGENT", `Risk → ${riskAction.kind}`, {
+    deltaUsd: composition.deltaUsd.toFixed(4),
+    reason: riskAction.kind === "SKIP" ? riskAction.reason : undefined,
+  });
   decisions.push({
     agent: "Risk",
     action: riskAction.kind,
@@ -264,13 +312,18 @@ export async function runCycle(opts?: { dryRun?: boolean }): Promise<CycleSummar
     });
   } catch {}
 
-  return {
+  const summary = {
     cycleNumber,
     poolPrice,
     poolTick: pool.tick,
     decisions,
     durationMs: Date.now() - start,
   };
+  logger.success("ORCHESTRATOR", `cycle #${cycleNumber} complete`, {
+    durationMs: summary.durationMs,
+    actions: decisions.map((d) => `${d.agent}:${d.action}`).join(" "),
+  });
+  return summary;
 }
 
 let timer: NodeJS.Timeout | null = null;
@@ -282,13 +335,9 @@ export function startOrchestrator(): void {
     if (running) return;
     running = true;
     try {
-      const summary = await runCycle();
-      console.log(
-        `[cycle ${summary.cycleNumber}] price=${summary.poolPrice.toFixed(6)} tick=${summary.poolTick} ` +
-          summary.decisions.map((d) => `${d.agent}:${d.action}`).join(" ")
-      );
+      await runCycle();
     } catch (e) {
-      console.error("[orchestrator] cycle error:", (e as Error).message);
+      logger.error("ORCHESTRATOR", "cycle error", { error: (e as Error).message });
     } finally {
       running = false;
     }
@@ -296,7 +345,7 @@ export function startOrchestrator(): void {
   // Kick once immediately, then on interval
   void tick();
   timer = setInterval(tick, config.cycleIntervalMs);
-  console.log(`[orchestrator] started, interval=${config.cycleIntervalMs}ms`);
+  logger.success("ORCHESTRATOR", `loop started`, { intervalMs: config.cycleIntervalMs });
 }
 
 export function stopOrchestrator(): void {

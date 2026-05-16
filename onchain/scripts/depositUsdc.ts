@@ -6,8 +6,9 @@ dotenv.config();
 const CAPITAL_ROUTER_ADDRESS = process.env.CAPITAL_ROUTER_ADDRESS!;
 const USDC_E_ADDRESS = "0x7aB6f3ed87C42eF0aDb67Ed95090f8bF5240149e";
 
-// Amount to deposit — edit before running
-const DEPOSIT_AMOUNT_USDC = "20"; // 20 USDC.e
+// Amount to deposit — edit before running.
+// Leave at least 2 USDC.e in deployer wallet so the orchestrator can execute real arb swaps.
+const DEPOSIT_AMOUNT_USDC = "5"; // 5 USDC.e into CapitalRouter
 
 const ERC20_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",

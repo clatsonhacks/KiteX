@@ -87,9 +87,9 @@ export default function DemoPage() {
           </p>
 
           {/* Warning Banner */}
-          <div className="border border-accent/50 bg-accent/10 p-4 mb-4">
+          <div className="border border-border bg-background p-4 mb-4">
             <div className="font-mono text-xs text-accent">
-              ⚠️ WARNING: These buttons trigger REAL on-chain transactions on Kite mainnet. Use sparingly during demo.
+              ⚠ WARNING: These buttons trigger REAL on-chain transactions on Kite mainnet. Use sparingly during demo.
             </div>
           </div>
 
@@ -97,8 +97,8 @@ export default function DemoPage() {
           {message && (
             <div
               className={cn(
-                "border p-4 mb-4",
-                message.type === "success" ? "border-green-400/50 bg-green-400/10 text-green-400" : "border-destructive/50 bg-destructive/10 text-destructive"
+                "border bg-background p-4 mb-4",
+                message.type === "success" ? "border-border text-green-400" : "border-border text-destructive"
               )}
             >
               <div className="font-mono text-xs">{message.text}</div>
@@ -108,7 +108,7 @@ export default function DemoPage() {
           {/* Demo Info */}
           {demoInfo && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="border border-border bg-card p-4">
+              <div className="border border-border bg-background p-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                   CapitalRouter
                 </div>
@@ -120,7 +120,7 @@ export default function DemoPage() {
                   {demoInfo.capitalRouter}
                 </Link>
               </div>
-              <div className="border border-border bg-card p-4">
+              <div className="border border-border bg-background p-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                   KitexAuditLog
                 </div>
@@ -132,13 +132,24 @@ export default function DemoPage() {
                   {demoInfo.auditLog}
                 </Link>
               </div>
-              <div className="border border-border bg-card p-4">
+              <div className="border border-border bg-background p-4">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-                  Goldsky Endpoint
+                  Goldsky Subgraph
                 </div>
-                <div className="font-mono text-xs text-muted-foreground truncate">
-                  {demoInfo.goldskyEndpoint?.split("/").pop()}
-                </div>
+                {(() => {
+                  const url = demoInfo.goldskyEndpoint || ""
+                  const match = url.match(/subgraphs\/([^/]+)\/([^/]+)/)
+                  const label = match ? `${match[1]} · v${match[2]}` : url
+                  return (
+                    <Link
+                      href={url}
+                      target="_blank"
+                      className="font-mono text-xs text-accent hover:underline break-all"
+                    >
+                      {label}
+                    </Link>
+                  )
+                })()}
               </div>
             </div>
           )}
@@ -147,19 +158,19 @@ export default function DemoPage() {
         {/* Control Panels */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Panel 1: Price Divergence */}
-          <div className="border border-border bg-card p-6">
+          <div className="border border-border bg-background p-6 flex flex-col">
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
               1. Trigger Price Divergence
             </div>
-            <p className="font-mono text-xs text-muted-foreground mb-6">
+            <p className="font-mono text-xs text-muted-foreground mb-6 flex-1">
               Executes a real swap that pushes pool price outside LP range. ArbitrageAgent will detect and self-arb within 1-2 cycles.
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-auto">
               <Button
                 onClick={() => divergenceMutation.mutate({ direction: "up" })}
                 disabled={divergenceMutation.isPending}
-                className="flex-1 bg-background border border-green-400 text-green-400 hover:bg-green-400/10 font-mono text-xs uppercase tracking-widest h-12"
+                className="flex-1 bg-background border border-border hover:border-green-400/60 text-green-400/90 hover:text-green-400 hover:bg-green-400/5 font-mono text-xs uppercase tracking-widest h-12 transition-colors"
               >
                 <ArrowUp className="w-4 h-4 mr-2" />
                 Push Up
@@ -167,7 +178,7 @@ export default function DemoPage() {
               <Button
                 onClick={() => divergenceMutation.mutate({ direction: "down" })}
                 disabled={divergenceMutation.isPending}
-                className="flex-1 bg-background border border-destructive text-destructive hover:bg-destructive/10 font-mono text-xs uppercase tracking-widest h-12"
+                className="flex-1 bg-background border border-border hover:border-destructive/60 text-destructive/90 hover:text-destructive hover:bg-destructive/5 font-mono text-xs uppercase tracking-widest h-12 transition-colors"
               >
                 <ArrowDown className="w-4 h-4 mr-2" />
                 Push Down
@@ -176,18 +187,18 @@ export default function DemoPage() {
           </div>
 
           {/* Panel 2: High Volume */}
-          <div className="border border-border bg-card p-6">
+          <div className="border border-border bg-background p-6 flex flex-col">
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
               2. Simulate High Volume
             </div>
-            <p className="font-mono text-xs text-muted-foreground mb-6">
+            <p className="font-mono text-xs text-muted-foreground mb-6 flex-1">
               Executes 5 consecutive swaps to accumulate delta exposure. RiskAgent will detect and log a hedge intent.
             </p>
 
             <Button
               onClick={() => volumeMutation.mutate()}
               disabled={volumeMutation.isPending}
-              className="w-full bg-background border border-accent text-accent hover:bg-accent/10 font-mono text-xs uppercase tracking-widest h-12"
+              className="w-full mt-auto bg-background border border-border hover:border-accent/60 text-accent/90 hover:text-accent hover:bg-accent/5 font-mono text-xs uppercase tracking-widest h-12 transition-colors"
             >
               <Activity className="w-4 h-4 mr-2" />
               {volumeMutation.isPending ? "Executing..." : "Trigger Volume"}
@@ -195,18 +206,18 @@ export default function DemoPage() {
           </div>
 
           {/* Panel 3: Force Rebalance */}
-          <div className="border border-border bg-card p-6">
+          <div className="border border-border bg-background p-6 flex flex-col">
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
               3. Force Rebalance
             </div>
-            <p className="font-mono text-xs text-muted-foreground mb-6">
+            <p className="font-mono text-xs text-muted-foreground mb-6 flex-1">
               Forces LiquidityAgent to remove current LP position and place a new one immediately, ignoring cooldown.
             </p>
 
             <Button
               onClick={() => rebalanceMutation.mutate()}
               disabled={rebalanceMutation.isPending}
-              className="w-full bg-background border border-blue-400 text-blue-400 hover:bg-blue-400/10 font-mono text-xs uppercase tracking-widest h-12"
+              className="w-full mt-auto bg-background border border-border hover:border-blue-400/60 text-blue-400/90 hover:text-blue-400 hover:bg-blue-400/5 font-mono text-xs uppercase tracking-widest h-12 transition-colors"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               {rebalanceMutation.isPending ? "Rebalancing..." : "Force Rebalance"}
@@ -215,7 +226,7 @@ export default function DemoPage() {
         </div>
 
         {/* Run Cycle Button */}
-        <div className="border border-accent/50 bg-accent/5 p-6 mb-8">
+        <div className="border border-border bg-background p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
@@ -228,7 +239,7 @@ export default function DemoPage() {
             <Button
               onClick={() => cycleMutation.mutate()}
               disabled={cycleMutation.isPending}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-xs uppercase tracking-widest h-12 px-8"
+              className="bg-background border border-border hover:border-accent/60 text-accent/90 hover:text-accent hover:bg-accent/5 font-mono text-xs uppercase tracking-widest h-12 px-8 transition-colors"
             >
               <Play className="w-4 h-4 mr-2" />
               {cycleMutation.isPending ? "Running..." : "Run Cycle Now"}
@@ -237,7 +248,7 @@ export default function DemoPage() {
         </div>
 
         {/* Live Transaction Feed */}
-        <div className="border border-border bg-card/50 p-6">
+        <div className="border border-border bg-background p-6">
           <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-4">
             Live Transaction Feed (Last 10 Events)
           </div>
