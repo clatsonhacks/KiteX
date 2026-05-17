@@ -26,6 +26,7 @@ Kitex is a three-agent system that solves the two reasons liquidity providers ke
 
 ---
 
+
 ## 1. Problem
 
 Concentrated liquidity on DEXs is the most capital-efficient form of on-chain market making that exists. But liquidity providers consistently lose money. Two separate problems cause this:
